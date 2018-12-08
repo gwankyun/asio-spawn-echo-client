@@ -34,6 +34,9 @@ public:
 	~session_t();
 
 	socket_t socket;
+	string address;
+	uint16_t port;
+	vector<char> buffer;
 
 	void go();
 

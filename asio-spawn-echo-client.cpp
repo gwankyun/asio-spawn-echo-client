@@ -32,17 +32,29 @@ void session_t::go()
 			{
 				INFO("log", "async_write_some:{0}", size);
 
-				vector<char> buffer(1024, '\0');
-				socket.async_read_some(asio::buffer(buffer), yield[ec]);
-				if (ec)
+				vector<char> buff(1024, '\0');
+
+				while (true)
 				{
-					ERROR("log", ec.message());
-					exit(1);
+					auto read_size = socket.async_read_some(asio::buffer(buff), yield[ec]);
+					if (ec)
+					{
+						ERROR("log", ec.message());
+						exit(1);
+					}
+					else
+					{
+						copy_n(buff.begin(), read_size, back_inserter(buffer));
+						if (read_size < buff.size())
+						{
+							break;
+						}
+					}
 				}
-				else
-				{
-					INFO("log", "async_read_some:{0}", buffer.data());
-				}
+
+				buffer.push_back('\0');
+				INFO("log", "async_read_some:{0}", buffer.data());
+				buffer.clear();
 			}
 		}
 	});
@@ -69,6 +81,7 @@ int main()
 		}
 		else
 		{
+			INFO("log", "address:{0} port:{1}", session->address, session->port);
 			session->go();
 		}
 	});
